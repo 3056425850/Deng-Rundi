@@ -6,14 +6,18 @@ String Password="12345";
 String input="";
 int cs =0;
 Servo myServo;
-bool buttonStates[10] = {false}; 
+unsigned long servoStartTime = 0;
+unsigned long buzzerStartTime = 0;
+bool servoActive = false;
+bool buzzerActive = false;
+unsigned long lastButtonPressTime[10] = {0}; 
 void check()
 {
   if(input==Password)
   {
     myServo.write(90);
-    delay(3000);
-    myServo.write(0);
+    servoStartTime = millis();
+    servoActive = true;
     cs=0;
   }
   else
@@ -22,9 +26,8 @@ void check()
     if(cs>=3)
     {
    digitalWrite(buzzerPin, HIGH); 
-  delay(1000);                   
-  digitalWrite(buzzerPin, LOW);  
-  delay(1000);                   
+   buzzerStartTime = millis();
+   buzzerActive = true; 
      cs=0;
     }
     }
@@ -42,17 +45,28 @@ void setup() {
 }
 
 void loop() {
-  for(int i=0;i<10;i++)
-  {
-   if(digitalRead(buttonPins[i])==LOW)
-   {
-   delay(200);
-   input+=String(i);
-   Serial.println(input);
-   if(input.length()==5)
-   check();
-   while(digitalRead(buttonPins[i])==LOW);
-   }
+  if (servoActive && (millis() - servoStartTime >= 3000)) 
+ {
+    myServo.write(0); 
+    servoActive = false;
   }
-
+   if (buzzerActive&&millis() - buzzerStartTime >= 1000) 
+   {
+      digitalWrite(buzzerPin, LOW);  
+      buzzerActive = false;
+    }
+  
+  for (int i = 0; i < 10; i++) {
+    if (digitalRead(buttonPins[i]) == HIGH) {
+      if (millis() - lastButtonPressTime[i] > 200) {  // 防抖延迟
+        int sj = i + 1;
+        input += String(sj);
+        Serial.println(input);
+        if (input.length() == 5) {
+          check();
+        }
+        lastButtonPressTime[i] = millis();  // 更新按下时间
+      }
+    }
+  }
 }
