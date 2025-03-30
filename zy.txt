@@ -1,0 +1,58 @@
+#include<Servo.h>
+int buttonPins[]={2,3,4,5,6,7,8,9,10,11};
+int buzzerPin=12;
+int servo=13;
+String Password="12345";
+String input="";
+int cs =0;
+Servo myServo;
+bool buttonStates[10] = {false}; 
+void check()
+{
+  if(input==Password)
+  {
+    myServo.write(90);
+    delay(3000);
+    myServo.write(0);
+    cs=0;
+  }
+  else
+  {
+    cs++;
+    if(cs>=3)
+    {
+   digitalWrite(buzzerPin, HIGH); 
+  delay(1000);                   
+  digitalWrite(buzzerPin, LOW);  
+  delay(1000);                   
+     cs=0;
+    }
+    }
+    input="";
+}
+
+void setup() {
+  for(int i=0; i<10; i++)
+  pinMode(buttonPins[i], INPUT_PULLUP);
+  pinMode(buzzerPin, OUTPUT);
+  myServo.attach(servo);
+  myServo.write(0);
+  Serial.begin(9600);
+
+}
+
+void loop() {
+  for(int i=0;i<10;i++)
+  {
+   if(digitalRead(buttonPins[i])==LOW)
+   {
+   delay(200);
+   input+=String(i);
+   Serial.println(input);
+   if(input.length()==5)
+   check();
+   while(digitalRead(buttonPins[i])==LOW);
+   }
+  }
+
+}
